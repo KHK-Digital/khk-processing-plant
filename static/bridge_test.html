@@ -1,0 +1,36 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KHK Bluetooth Bridge Test</title>
+</head>
+<body>
+  <h3>KHK Bluetooth Bridge Test</h3>
+  <button onclick="testBridge()">Test Bluetooth Weight</button>
+  <pre id="result">Waiting for test...</pre>
+
+  <script>
+    async function testBridge() {
+      const result = document.getElementById("result");
+      result.textContent = "Connecting...";
+
+      try {
+        const response = await fetch(
+          "http://127.0.0.1:8765/weight",
+          { cache: "no-store" }
+        );
+
+        if (!response.ok) {
+          throw new Error("HTTP " + response.status);
+        }
+
+        const data = await response.json();
+        result.textContent = JSON.stringify(data, null, 2);
+      } catch (error) {
+        result.textContent = "ERROR: " + error.message;
+      }
+    }
+  </script>
+</body>
+</html>
