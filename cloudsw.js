@@ -1,8 +1,19 @@
 
-const CACHE_NAME = 'khk-processing-plant-cloud-v4';
+const CACHE_VERSION = 'v5';
 
-// Automatically determine the GitHub Pages repository path.
+// Determine the environment from the service worker location.
 const BASE_PATH = new URL('./', self.location.href).pathname;
+
+const ENVIRONMENT =
+  BASE_PATH.endsWith('/dev/') ? 'dev' :
+  BASE_PATH.endsWith('/staging/') ? 'staging' :
+  'prod';
+
+// Give each environment its own cache.
+const CACHE_PREFIX =
+  `khk-processing-plant-${ENVIRONMENT}-`;
+
+const CACHE_NAME = `${CACHE_PREFIX}${CACHE_VERSION}`;
 
 const OFFLINE_FILES = [
   'index.html',
@@ -16,7 +27,7 @@ const OFFLINE_FILES = [
   'static/js/cloudlogin.js'
 ].map(path => BASE_PATH + path);
 
-// Install: cache the cloud kiosk application files.
+// Install: cache the application files.
 self.addEventListener('install', event => {
   event.waitUntil(
     (async () => {
@@ -42,7 +53,8 @@ self.addEventListener('install', event => {
   );
 });
 
-// Activate: remove outdated cloud kiosk caches.
+// Activate: delete only outdated caches belonging
+// to this environment.
 self.addEventListener('activate', event => {
   event.waitUntil(
     (async () => {
@@ -51,7 +63,7 @@ self.addEventListener('activate', event => {
       await Promise.all(
         names
           .filter(name =>
-            name.startsWith('khk-processing-plant-cloud-') &&
+            name.startsWith(CACHE_PREFIX) &&
             name !== CACHE_NAME
           )
           .map(name => caches.delete(name))
@@ -62,7 +74,7 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Fetch: network first, cache fallback when offline.
+// Fetch: network first, cached response when offline.
 self.addEventListener('fetch', event => {
   const request = event.request;
   const url = new URL(request.url);
@@ -70,7 +82,7 @@ self.addEventListener('fetch', event => {
   if (request.method !== 'GET') return;
   if (url.origin !== self.location.origin) return;
 
-  // Only handle requests belonging to this PWA.
+  // Only handle requests within this environment.
   if (!url.pathname.startsWith(BASE_PATH)) return;
 
   const relativePath = url.pathname.slice(BASE_PATH.length);
