@@ -1,18 +1,18 @@
 
 {
-  "id": "/cloudkiosk.html",
+  "id": "../index.html",
   "name": "KHK Processing Plant Cloud",
   "short_name": "KHK Plant",
   "description": "KHK Processing Plant Pulp Weighing and Traceability System",
-  "start_url": "/cloudkiosk.html",
-  "scope": "/",
+  "start_url": "../index.html",
+  "scope": "../",
   "display": "standalone",
   "background_color": "#FFFFFF",
   "theme_color": "#164A32",
   "orientation": "any",
   "icons": [
     {
-      "src": "/static/images/khk-logo.png",
+      "src": "images/khk-logo.png",
       "sizes": "any",
       "type": "image/png",
       "purpose": "any"
