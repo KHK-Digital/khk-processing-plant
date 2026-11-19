@@ -230,9 +230,66 @@ if (!/Android/i.test(navigator.userAgent)) {
 
  // Stage 6.1: Offline IndexedDB initialization
 
-const KHK_DB_NAME = 'KHKProcessingPlant';
+
+const KHK_ENVIRONMENT =
+  window.location.pathname.includes('/dev/') ? 'dev' :
+  window.location.pathname.includes('/staging/') ? 'staging' :
+  'prod';
+
+
+const KHK_DB_NAME =
+  KHK_ENVIRONMENT === 'prod'
+    ? 'KHKProcessingPlant'
+    : `KHKProcessingPlant_${KHK_ENVIRONMENT}`;
+
+
 const KHK_DB_VERSION = 1;
 const KHK_STORE_NAME = 'weighings';
+
+console.log('KHK Environment:', KHK_ENVIRONMENT);
+console.log('KHK Database:', KHK_DB_NAME);
+
+
+ // Stage 8.8J: AWS synchronization environment safeguards
+
+const KHK_CLOUD_CONFIG = {
+  dev: {
+    environment: 'dev',
+    awsSyncEnabled: false,
+    apiBaseUrl: null
+  },
+
+  staging: {
+    environment: 'staging',
+    awsSyncEnabled: false,
+    apiBaseUrl: null
+  },
+
+  prod: {
+    environment: 'prod',
+    awsSyncEnabled: false,
+    apiBaseUrl: null
+  }
+};
+
+const KHK_ACTIVE_CONFIG =
+  KHK_CLOUD_CONFIG[KHK_ENVIRONMENT];
+
+console.log(
+  'KHK Cloud Configuration:',
+  KHK_ACTIVE_CONFIG.environment
+);
+
+console.log(
+  'AWS Synchronization:',
+  KHK_ACTIVE_CONFIG.awsSyncEnabled
+    ? 'Enabled'
+    : 'Disabled'
+);
+
+
+
+
 
 function openKHKDatabase() {
   return new Promise((resolve, reject) => {
@@ -347,9 +404,23 @@ async function saveKHKTransaction(data) {
  // Stage 6.5: Persistent kiosk identification
 
 function getKioskId() {
-  const storageKey = 'KHK_KIOSK_ID';
+  const storageKey = `KHK_KIOSK_ID_${KHK_ENVIRONMENT}`;
+
 
   let kioskId = localStorage.getItem(storageKey);
+
+  // Preserve the existing production kiosk identity.
+  if (!kioskId && KHK_ENVIRONMENT === 'prod') {
+    const existingId = localStorage.getItem('KHK_KIOSK_ID');
+
+    if (existingId) {
+      kioskId = existingId;
+      localStorage.setItem(storageKey, kioskId);
+
+      console.log('Existing production kiosk ID preserved');
+    }
+  }
+
 
   if (!kioskId) {
     const isAndroid =
@@ -456,24 +527,3 @@ async function loadLocalHistory() {
 refresh();
 
 
-
- // Stage 7.8: Register offline PWA service worker
-
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', async () => {
-    try {
-      const registration =
-        await navigator.serviceWorker.register('/cloudsw.js');
-
-      console.log(
-        'KHK Service Worker registered:',
-        registration.scope
-      );
-    } catch (error) {
-      console.error(
-        'KHK Service Worker registration failed:',
-        error
-      );
-    }
-  });
-}
