@@ -1,0 +1,78 @@
+
+name: Deploy KHK Processing Plant Environments
+
+on:
+  push:
+    branches:
+      - main
+      - development
+      - staging
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: khk-processing-plant-pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout production
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: prod
+
+      - name: Checkout development
+        uses: actions/checkout@v4
+        with:
+          ref: development
+          path: dev
+
+      - name: Checkout staging
+        uses: actions/checkout@v4
+        with:
+          ref: staging
+          path: staging
+
+      - name: Prepare deployment directories
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mkdir -p _site/dev _site/staging
+
+          cp -a prod/. _site/
+          cp -a dev/. _site/dev/
+          cp -a staging/. _site/staging/
+
+          # Prevent Jekyll processing of static assets.
+          touch _site/.nojekyll
+
+          # Exclude Git metadata from deployment.
+          find _site -type d -name .git -prune -exec rm -rf {} +
+
+          test -f _site/index.html
+          test -f _site/dev/index.html
+          test -f _site/staging/index.html
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload deployment artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
