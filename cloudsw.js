@@ -1,16 +1,20 @@
 
-const CACHE_NAME = 'khk-processing-plant-cloud-v3';
+const CACHE_NAME = 'khk-processing-plant-cloud-v4';
+
+// Automatically determine the GitHub Pages repository path.
+const BASE_PATH = new URL('./', self.location.href).pathname;
 
 const OFFLINE_FILES = [
-  '/cloudkiosk.html',
-  '/static/js/cloudkiosk.js',
-  '/static/css/cloudkiosk.css',
-  '/static/css/cloudhardware_status.css',
-  '/static/images/khk-logo.png',
-  '/static/cloudmanifest.json',
-  '/static/js/cloudauth.js',
-  '/static/js/cloudlogin.js'
-];
+  'index.html',
+  'cloudkiosk.html',
+  'static/js/cloudkiosk.js',
+  'static/css/cloudkiosk.css',
+  'static/css/cloudhardware_status.css',
+  'static/images/khk-logo.png',
+  'static/cloudmanifest.json',
+  'static/js/cloudauth.js',
+  'static/js/cloudlogin.js'
+].map(path => BASE_PATH + path);
 
 // Install: cache the cloud kiosk application files.
 self.addEventListener('install', event => {
@@ -38,7 +42,7 @@ self.addEventListener('install', event => {
   );
 });
 
-// Activate: remove outdated cloud caches.
+// Activate: remove outdated cloud kiosk caches.
 self.addEventListener('activate', event => {
   event.waitUntil(
     (async () => {
@@ -46,7 +50,10 @@ self.addEventListener('activate', event => {
 
       await Promise.all(
         names
-          .filter(name => name !== CACHE_NAME)
+          .filter(name =>
+            name.startsWith('khk-processing-plant-cloud-') &&
+            name !== CACHE_NAME
+          )
           .map(name => caches.delete(name))
       );
 
@@ -55,7 +62,7 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Fetch: use network first, cache fallback when offline.
+// Fetch: network first, cache fallback when offline.
 self.addEventListener('fetch', event => {
   const request = event.request;
   const url = new URL(request.url);
@@ -63,11 +70,16 @@ self.addEventListener('fetch', event => {
   if (request.method !== 'GET') return;
   if (url.origin !== self.location.origin) return;
 
+  // Only handle requests belonging to this PWA.
+  if (!url.pathname.startsWith(BASE_PATH)) return;
+
+  const relativePath = url.pathname.slice(BASE_PATH.length);
+
   // Never cache API or authentication requests.
   if (
-    url.pathname.startsWith('/api/') ||
-    url.pathname.startsWith('/oauth2/') ||
-    url.pathname === '/callback'
+    relativePath.startsWith('api/') ||
+    relativePath.startsWith('oauth2/') ||
+    relativePath === 'callback'
   ) {
     return;
   }
@@ -76,7 +88,7 @@ self.addEventListener('fetch', event => {
 
   const isAppAsset =
     OFFLINE_FILES.includes(url.pathname) ||
-    url.pathname.startsWith('/static/');
+    relativePath.startsWith('static/');
 
   if (!isNavigation && !isAppAsset) return;
 
@@ -102,7 +114,7 @@ self.addEventListener('fetch', event => {
 
         if (isNavigation) {
           const fallback =
-            await cache.match('/cloudkiosk.html');
+            await cache.match(BASE_PATH + 'index.html');
 
           if (fallback) return fallback;
         }
