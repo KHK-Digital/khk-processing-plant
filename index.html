@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>KHK Processing Plant — Cloud</title>
+
+  <link rel="stylesheet"
+        href="/static/css/cloudkiosk.css">
+
+  <link rel="stylesheet"
+        href="/static/css/cloudhardware_status.css">
+
+
+  <script src="/static/js/cloudauth.js" defer></script>
+  <script src="/static/js/cloudkiosk.js" defer></script>        
+  <script src="/static/js/cloudkiosk.js" defer></script>
+
+  
+  <link rel="manifest"
+        href="/static/cloudmanifest.json">
+
+  <meta name="theme-color" content="#164A32">
+</head>
+
+<body>
+<div class="shell">
+  <aside class="sidebar">
+    <div class="brand">
+    <img
+        src="/static/images/khk-logo.png"
+        alt="KHK Logo"
+        class="khk-logo"
+    >
+    <strong>KHK Processing Plant</strong>
+</div>
+    <p class="small">Durian Pulp Traceability</p>
+    <div class="nav">◈ Pulp Weighing</div>
+    <p class="small station-label">Weighing station</p>
+    <div class="stat"><span class="small">Station ID</span><strong id="station">Detecting...</strong></div>
+    <div class="stat production"><span class="small">Completed packs</span><strong id="count">0</strong></div>
+    
+    <button id="new" class="side-button">New transaction</button>
+    <button id="showHistory" class="side-button">Weighing history</button>
+    <p class="small sidebar-footer">Local POC · Offline SQLite storage</p>
+  </aside>
+  <main class="main">
+    
+
+
+    <div class="kiosk-topbar">
+        <h1>Pulp Weighing</h1>
+
+        <div class="hardware-inline">
+            <div class="hardware-device">
+                <span id="hwScanner" class="hardware-dot"></span>
+                <span>Scanner</span>
+                <span id="hwScannerDetail" hidden></span>
+            </div>
+
+            <div class="hardware-device">
+                <span id="hwPrinter" class="hardware-dot"></span>
+                <span>Printer</span>
+                <span id="hwPrinterDetail" hidden></span>
+            </div>
+
+            <div class="hardware-device">
+                <span id="hwScale" class="hardware-dot"></span>
+                <span>Scale</span>
+                <span id="hwScaleDetail" hidden></span>
+            </div>
+        </div>
+    </div>
+
+    <p class="small">Scan a source QR, weigh the pulp, scan the packaging QR and save traceability.</p>
+    <nav class="steps" aria-label="Weighing steps">
+      <span id="step1" class="active">1 · Source QR</span><span id="step2">2 · Weigh</span><span id="step3">3 · Pack QR</span><span id="step4">4 · Save</span>
+    </nav>
+    <div id="message" class="message" role="status" aria-live="polite"></div>
+    <section id="sourcePanel" class="panel">
+      <h2>Scan Source QR</h2><p class="small">Scan or enter the incoming fruit/source QR.</p>
+      <label for="source">Source QR code</label><input id="source" maxlength="512" autocomplete="off" placeholder="Scan source QR here">
+      <button id="toWeigh">Continue to weighing →</button>
+    </section>
+    <section id="weighPanel" class="panel hidden">
+      <h2>Weigh Pulp</h2><p class="small">Simulated scale for interface testing. No hardware connected.</p>
+      <div class="reading"><span id="reading">0</span><small> g</small></div>
+      <p id="scaleStatus" class="small">Connecting to scale...</p><button id="capture">Capture weight →</button><button id="backSource" class="secondary">← Back</button>
+    </section>
+    <section id="packPanel" class="panel hidden">
+      <h2>Scan Packaging QR</h2><p class="small">Scan the QR attached after packaging.</p>
+      <div class="summary" id="summary"></div><label for="pack">Packaging QR code</label>
+      <input id="pack" maxlength="512" autocomplete="off" placeholder="Scan packaging QR here">
+      <button id="toSave">Review transaction →</button><button id="backWeigh" class="secondary">← Back</button>
+    </section>
+    <section id="savePanel" class="panel hidden">
+      <h2>Confirm &amp; Save</h2><p class="small">Review before saving to the local SQLite database.</p>
+      <div class="summary" id="review"></div><button id="save">Save traceability record</button><button id="backPack" class="secondary">← Back</button>
+    </section>
+    <section id="successPanel" class="panel hidden">
+      <h2>Record saved locally ✓</h2><div class="summary" id="saved"></div><button id="next">Start next pack →</button>
+    </section>
+    <section id="historyPanel" class="panel hidden">
+      <h2>Weighing History</h2><p class="small">Latest 100 records saved on this kiosk.</p>
+      <input id="search" placeholder="Search source or packaging QR">
+      <div class="table-wrap"><table><thead><tr><th>Time</th><th>Source QR</th><th>Weight</th><th>Packaging QR</th><th>Sync</th></tr></thead><tbody id="historyRows"></tbody></table></div>
+      <button id="closeHistory" class="secondary">Back to weighing</button>
+    </section>
+  </main>
+</div>
+</body>
+</html>
